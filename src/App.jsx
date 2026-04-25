@@ -1,4 +1,6 @@
 import ConversationsPage from "./components/ConversationsPage";
+import AgentSettingsView from "./views/AgentSettingsView";
+import SystemLogsView from "./views/SystemLogsView";
 import { useEffect, useRef, useState } from "react";
 import {
   ApartmentOutlined,
@@ -23,6 +25,7 @@ import {
   TeamOutlined,
   ThunderboltOutlined,
   UserSwitchOutlined,
+  UserAddOutlined,
 } from "@ant-design/icons";
 import {
   Avatar,
@@ -51,6 +54,7 @@ import {
   Timeline,
   Typography,
   message,
+  Tabs,
 } from "antd";
 
 const { Header, Sider, Content, Footer } = Layout;
@@ -69,7 +73,8 @@ const menuItems = [
     label: "Tổng quan",
     children: [
       { key: "dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
-      { key: "conversations", icon: <MessageOutlined />, label: "Hội thoại" },
+      { key: "conversations_old", icon: <MessageOutlined />, label: "Hội thoại khách cũ" },
+      { key: "conversations_new", icon: <UserAddOutlined />, label: "Hội thoại khách mới" },
     ],
   },
   {
@@ -94,6 +99,7 @@ const menuItems = [
     label: "Nội bộ",
     children: [
       { key: "assistant", icon: <RobotOutlined />, label: "Trợ lý AI" },
+      { key: "system_logs", icon: <FileTextOutlined />, label: "System Logs" },
       { key: "settings", icon: <SettingOutlined />, label: "Cài đặt" },
     ],
   },
@@ -102,13 +108,15 @@ const menuItems = [
 // Page titles
 const pageMeta = {
   dashboard: { title: "Dashboard vận hành", subtitle: "Toàn cảnh vận hành AI Agent đa kênh trong ngày." },
-  conversations: { title: "Trung tâm hội thoại", subtitle: "Theo dõi inbox, ưu tiên phản hồi và hành động tiếp theo." },
+  conversations_old: { title: "Hội thoại khách cũ", subtitle: "Theo dõi inbox và chăm sóc khách hàng đã sử dụng dịch vụ." },
+  conversations_new: { title: "Hội thoại khách mới", subtitle: "Tư vấn và phản hồi khách hàng tiềm năng mới." },
   tickets: { title: "Ticket Manager", subtitle: "Quản lý ticket theo SLA, owner và mức độ ưu tiên." },
   classification: { title: "Phân loại AI", subtitle: "Giám sát intent, độ chính xác và các case AI cần audit." },
   mapping: { title: "Owner Mapping", subtitle: "Phân tuyến ticket theo nhóm xử lý, tải công việc và rule routing." },
   reports: { title: "Báo cáo AI", subtitle: "Tổng hợp hiệu suất đa kênh, marketing và chuyển đổi lead." },
   content: { title: "Content Assist", subtitle: "Kho nội dung AI hỗ trợ sale, CSKH và marketing bất động sản." },
   assistant: { title: "Trợ lý AI nội bộ", subtitle: "Khai thác dữ liệu vận hành bằng truy vấn ngôn ngữ tự nhiên." },
+  system_logs: { title: "System Logs", subtitle: "Giám sát hoạt động hệ thống real-time." },
   settings: { title: "Cài đặt hệ thống", subtitle: "Quản trị agent, kênh tích hợp, quyền và cấu hình phản hồi." },
 };
 
@@ -160,6 +168,8 @@ const initialConversations = [
     time: "2 phút",
     status: { label: "Mới", color: "blue" },
     channel: "Zalo",
+    isManual: false,
+    groupId: "brand_b",
     project: "Vinhomes Grand Park",
     intent: "Tư vấn sản phẩm",
     aiSummary: "Khách hỏi tồn kho căn hộ và có dấu hiệu là lead mới từ Zalo OA.",
@@ -192,6 +202,8 @@ const initialConversations = [
     time: "8 phút",
     status: { label: "Gấp", color: "red" },
     channel: "Facebook",
+    isManual: true,
+    groupId: "fb",
     project: "The Emerald Riverside",
     intent: "Tiến độ bàn giao",
     aiSummary: "Khách đang theo dõi lịch bàn giao, có nguy cơ escalte sang PM dự án.",
@@ -224,6 +236,8 @@ const initialConversations = [
     time: "15 phút",
     status: { label: "Xong", color: "green" },
     channel: "Web",
+    isManual: false,
+    groupId: "brand_1",
     project: "Masteri Centre Point",
     intent: "Nuôi dưỡng lead",
     aiSummary: "Lead đã nhận báo giá và tạm dừng quyết định, nên đẩy vào tệp follow-up tuần sau.",
@@ -256,6 +270,8 @@ const initialConversations = [
     time: "22 phút",
     status: { label: "Chờ PM", color: "orange" },
     channel: "Email",
+    isManual: true,
+    groupId: "brand_a",
     project: "Lumiere East",
     intent: "Cập nhật hợp đồng",
     aiSummary: "Case cần PM pháp lý kiểm tra phụ lục thanh toán và xác nhận điều khoản bổ sung.",
@@ -286,6 +302,8 @@ const initialConversations = [
     time: "35 phút",
     status: { label: "Mới", color: "blue" },
     channel: "Web",
+    isManual: false,
+    groupId: "aba",
     project: "Nam Sài Gòn Residence",
     intent: "Hỏi giá bán",
     aiSummary: "Khách hỏi đúng căn cụ thể, nên ưu tiên trả giá và chính sách thanh toán sớm.",
@@ -325,11 +343,23 @@ const initialTicketData = [
     status: { text: "Đang lỗi SLA", value: "error" },
     project: "The Emerald Riverside",
     slaDue: "10:30 hôm nay",
+    createdAt: new Date().setHours(8, 48, 0, 0),
+    slaHours: 2,
     recommendedAction: "Escalate PM dự án và gọi khách xác nhận timeline mới.",
     timeline: [
       "08:48 Ticket tạo tự động từ hội thoại Facebook",
       "08:51 AI gắn nhãn Gấp và đẩy sang Minh Tuấn",
       "09:10 Chưa có phản hồi từ PM dự án",
+    ],
+    messages: [
+      { from: "customer", text: "Cho hỏi tiến độ bàn giao block B dự án The Emerald Riverside?", time: "08:48" },
+      { from: "ai", text: "Dạ anh Hoàng, theo lịch hiện tại block B đang trong giai đoạn hoàn thiện nội thất.", time: "08:49", tag: "AI Auto" },
+      { from: "customer", text: "Tôi nghe nói bị trễ 2 tháng so với cam kết, đúng không? Trễ hạn vậy phạt HĐ sao?", time: "08:50" },
+    ],
+    aiDecisionLog: [
+      { time: "08:50", action: "Phân tích Intent", reason: "Phát hiện keywords 'trễ', 'phạt HĐ'. Phân loại: Khiếu nại tiến độ." },
+      { time: "08:51", action: "Đánh giá mức độ", reason: "Critical level: Cao. Gắn nhãn 'Gấp'." },
+      { time: "08:51", action: "Routing", reason: "Map tới owner Minh Tuấn (Chuyên viên khiếu nại dự án The Emerald)." },
     ],
   },
   {
@@ -342,11 +372,22 @@ const initialTicketData = [
     status: { text: "Đang xử lý", value: "processing" },
     project: "Vinhomes Grand Park",
     slaDue: "14:00 hôm nay",
+    createdAt: new Date().setHours(9, 2, 0, 0),
+    slaHours: 5,
     recommendedAction: "Gửi giỏ hàng tầng cao và xác nhận chênh giá cho khách.",
     timeline: [
       "09:02 Lead hỏi đổi căn qua Zalo",
       "09:04 AI map sang owner Thu Hà",
       "09:12 Đã gửi xác nhận đang kiểm tra quỹ căn",
+    ],
+    messages: [
+      { from: "customer", text: "Chào em, căn 2PN hôm trước chị đặt cọc giờ muốn đổi lên tầng cao hơn được không?", time: "09:02" },
+      { from: "ai", text: "Dạ chị, đổi tầng cao sẽ tuỳ thuộc vào rổ hàng hiện tại và có thể phát sinh chênh lệch giá. Chị muốn xem từ tầng mấy trở lên ạ?", time: "09:03", tag: "AI Auto" },
+      { from: "customer", text: "Tầng 15 trở lên nhé, xem giúp chị", time: "09:04" },
+    ],
+    aiDecisionLog: [
+      { time: "09:03", action: "Phân tích Intent", reason: "Khách có nhu cầu 'đổi tầng'. Phân loại: Thay đổi giỏ hàng." },
+      { time: "09:04", action: "Routing", reason: "Chuyển tư vấn viên Thu Hà (Người giữ booking của khách)." },
     ],
   },
   {
@@ -359,11 +400,22 @@ const initialTicketData = [
     status: { text: "Hoàn tất", value: "success" },
     project: "Masteri Centre Point",
     slaDue: "Đã xong",
+    createdAt: new Date().setHours(7, 40, 0, 0),
+    slaHours: 1,
     recommendedAction: "Đưa lead vào chuỗi follow-up lãi suất ngân hàng.",
     timeline: [
       "07:40 Lead vào website hỏi chính sách trả góp",
       "07:41 AI gửi mẫu tư vấn vay",
       "07:45 Ticket đóng tự động sau khi khách nhận thông tin",
+    ],
+    messages: [
+      { from: "customer", text: "Dự án này có hỗ trợ vay không bạn?", time: "07:40" },
+      { from: "ai", text: "Dạ dự án Masteri đang được Techcombank hỗ trợ vay 70%, ân hạn nợ gốc 24 tháng ạ. Anh muốn em tính bảng dòng tiền thử không?", time: "07:41", tag: "AI Auto" },
+      { from: "customer", text: "Ok gửi mẫu qua zalo số này nhé 0903...", time: "07:45" },
+    ],
+    aiDecisionLog: [
+      { time: "07:41", action: "Trả lời tự động", reason: "Khớp kịch bản tư vấn vay Masteri." },
+      { time: "07:45", action: "Đóng Ticket", reason: "Khách đã cung cấp thông tin liên hệ và nhận được tài liệu. Auto close." },
     ],
   },
   {
@@ -376,11 +428,21 @@ const initialTicketData = [
     status: { text: "Chờ phản hồi", value: "warning" },
     project: "Lumiere East",
     slaDue: "16:00 hôm nay",
+    createdAt: new Date().setHours(8, 1, 0, 0),
+    slaHours: 8,
     recommendedAction: "Soát lại phụ lục và gửi bản cập nhật hợp đồng.",
     timeline: [
       "08:01 Email cập nhật hợp đồng được phân loại",
       "08:05 Ticket chuyển pháp lý",
       "09:18 Đang chờ owner xác nhận thay đổi điều khoản",
+    ],
+    messages: [
+      { from: "customer", text: "Tôi cần bổ sung điều khoản thanh toán trả góp qua ngân hàng vào phụ lục hợp đồng.", time: "08:01" },
+      { from: "ai", text: "Dạ anh Dũng, em đã ghi nhận yêu cầu và chuyển cho bộ phận pháp lý kiểm tra. Anh sẽ nhận bản cập nhật trước 16:00 hôm nay.", time: "08:03", tag: "AI Auto" },
+    ],
+    aiDecisionLog: [
+      { time: "08:01", action: "Phân loại Email", reason: "Phát hiện tệp đính kèm và từ khoá 'phụ lục', 'hợp đồng'." },
+      { time: "08:05", action: "Routing", reason: "Chuyển nhóm Pháp lý (Owner: Quang Huy)." },
     ],
   },
   {
@@ -393,11 +455,21 @@ const initialTicketData = [
     status: { text: "Hoàn tất", value: "success" },
     project: "Nam Sài Gòn Residence",
     slaDue: "Đã xong",
+    createdAt: new Date().setHours(7, 12, 0, 0),
+    slaHours: 2,
     recommendedAction: "Tạo lịch gọi tư vấn dự án trong 24 giờ.",
     timeline: [
       "07:12 Website lead hỏi dự án Nam Sài Gòn",
       "07:13 AI gửi brochure và chính sách bán hàng",
       "07:20 Ticket đóng tự động sau khi khách nhận tài liệu",
+    ],
+    messages: [
+      { from: "customer", text: "Xin thông tin dự án", time: "07:12" },
+      { from: "ai", text: "Dạ chào anh/chị, em xin gửi thông tin tổng quan dự án Nam Sài Gòn Residence. Anh/chị có quan tâm dòng sản phẩm nhà phố hay biệt thự ạ?", time: "07:13", tag: "AI Auto" },
+    ],
+    aiDecisionLog: [
+      { time: "07:12", action: "Khởi tạo luồng", reason: "Lead mới từ Web. Khởi tạo luồng xin chào và gửi brochure." },
+      { time: "07:20", action: "Kết thúc", reason: "Khách out phiên session." },
     ],
   },
 ];
@@ -932,21 +1004,98 @@ function TicketsPage({
             }
           >
             {activeTicket ? (
-              <Space direction="vertical" size={16} style={{ width: "100%" }}>
-                <Card size="small" title="Thông tin ticket">
-                  <Descriptions column={1} size="small">
-                    <Descriptions.Item label="Nội dung">{activeTicket.content}</Descriptions.Item>
-                    <Descriptions.Item label="Dự án">{activeTicket.project}</Descriptions.Item>
-                    <Descriptions.Item label="Owner">{activeTicket.owner}</Descriptions.Item>
-                    <Descriptions.Item label="SLA due">{activeTicket.slaDue}</Descriptions.Item>
-                    <Descriptions.Item label="Đề xuất AI">{activeTicket.recommendedAction}</Descriptions.Item>
-                  </Descriptions>
-                </Card>
-
-                <Card size="small" title="Timeline xử lý">
-                  <Timeline items={activeTicket.timeline.map((entry) => ({ children: entry }))} />
-                </Card>
-              </Space>
+              <Tabs
+                defaultActiveKey="1"
+                items={[
+                  {
+                    key: "1",
+                    label: "Tổng quan",
+                    children: (
+                      <Space direction="vertical" size={16} style={{ width: "100%" }}>
+                        {activeTicket.slaHours && (
+                          <div style={{ marginBottom: 8, padding: "0 4px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                              <Text type="secondary" style={{ fontSize: 13 }}>Thời gian xử lý (SLA: {activeTicket.slaHours}h)</Text>
+                              <Text strong style={{ color: activeTicket.status.value === "error" ? "#cf1322" : "inherit" }}>
+                                {activeTicket.slaDue}
+                              </Text>
+                            </div>
+                            <Progress 
+                              percent={activeTicket.status.value === "success" ? 100 : (activeTicket.status.value === "error" ? 100 : 45)} 
+                              status={activeTicket.status.value === "success" ? "success" : (activeTicket.status.value === "error" ? "exception" : "active")} 
+                            />
+                          </div>
+                        )}
+                        <Card size="small" title="Thông tin ticket">
+                          <Descriptions column={1} size="small">
+                            <Descriptions.Item label="Nội dung">{activeTicket.content}</Descriptions.Item>
+                            <Descriptions.Item label="Dự án">{activeTicket.project}</Descriptions.Item>
+                            <Descriptions.Item label="Owner">{activeTicket.owner}</Descriptions.Item>
+                            <Descriptions.Item label="SLA due">{activeTicket.slaDue}</Descriptions.Item>
+                            <Descriptions.Item label="Đề xuất AI">{activeTicket.recommendedAction}</Descriptions.Item>
+                          </Descriptions>
+                        </Card>
+                        <Card size="small" title="Timeline xử lý">
+                          <Timeline items={activeTicket.timeline?.map((entry) => ({ children: entry }))} />
+                        </Card>
+                      </Space>
+                    ),
+                  },
+                  {
+                    key: "2",
+                    label: "Lịch sử hội thoại",
+                    children: (
+                      <div style={{ padding: "8px 0", maxHeight: 400, overflowY: "auto" }}>
+                        {activeTicket.messages ? activeTicket.messages.map((msg, index) => (
+                          <div key={index} style={{ marginBottom: 12, display: "flex", justifyContent: msg.from === "customer" ? "flex-start" : "flex-end" }}>
+                            {msg.from === "customer" && <Avatar style={{ backgroundColor: '#f56a00', marginRight: 8 }}>KH</Avatar>}
+                            <div style={{
+                              maxWidth: "80%",
+                              padding: "8px 12px",
+                              borderRadius: 8,
+                              backgroundColor: msg.from === "customer" ? "#f0f2f5" : "#e6f4ff",
+                              border: msg.from === "customer" ? "1px solid #d9d9d9" : "1px solid #91caff"
+                            }}>
+                              <div style={{ marginBottom: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <Text strong style={{ fontSize: 12, marginRight: 8 }}>{msg.from === "customer" ? "Khách hàng" : (msg.name || "AI Agent")}</Text>
+                                <Space size={4}>
+                                  {msg.tag && <Tag color="blue" style={{ fontSize: 10, lineHeight: "12px", padding: "0 4px", margin: 0 }}>{msg.tag}</Tag>}
+                                  <Text type="secondary" style={{ fontSize: 11 }}>{msg.time}</Text>
+                                </Space>
+                              </div>
+                              <Text>{msg.text}</Text>
+                            </div>
+                            {msg.from !== "customer" && <Avatar style={{ backgroundColor: msg.name ? '#1677ff' : '#722ed1', marginLeft: 8 }}>{msg.name ? msg.name.charAt(0) : <RobotOutlined />}</Avatar>}
+                          </div>
+                        )) : <Text type="secondary">Không có lịch sử hội thoại cho ticket này.</Text>}
+                      </div>
+                    ),
+                  },
+                  {
+                    key: "3",
+                    label: "Quyết định AI",
+                    children: (
+                      <div style={{ paddingTop: 8 }}>
+                        {activeTicket.aiDecisionLog ? (
+                          <Timeline 
+                            mode="left"
+                            items={activeTicket.aiDecisionLog.map((log) => ({
+                              label: log.time,
+                              children: (
+                                <>
+                                  <Text strong>{log.action}</Text>
+                                  <br />
+                                  <Text type="secondary" style={{ fontSize: 13 }}>{log.reason}</Text>
+                                </>
+                              ),
+                            }))}
+                          />
+                        ) : <Text type="secondary">Không có dữ liệu quyết định AI.</Text>}
+                      </div>
+                    ),
+                  },
+                ]}
+              />
             ) : (
               <Text type="secondary">Chọn một ticket trong bảng để xem chi tiết xử lý.</Text>
             )}
@@ -1967,159 +2116,6 @@ function AssistantPage() {
   );
 }
 
-function SettingsPage() {
-  const [config, setConfig] = useState({
-    channels: ["Zalo OA", "Facebook Page", "Web Chat", "Email"],
-    model: "ViProperty Agent v2",
-    handoffThreshold: 85,
-    slaHours: "08:00 - 21:00",
-    autoReply: true,
-    auditLog: true,
-  });
-  const [services, setServices] = useState([
-    { key: "zalo", label: "Zalo webhook", status: "success", text: "Ổn định", active: true },
-    { key: "fb", label: "Facebook inbox sync", status: "processing", text: "Đồng bộ liên tục", active: true },
-    { key: "email", label: "Email parser", status: "success", text: "Ổn định", active: true },
-    { key: "routing", label: "Owner routing engine", status: "processing", text: "Đang hoạt động", active: true },
-  ]);
-  const [editModal, setEditModal] = useState(false);
-  const [editForm] = Form.useForm();
-
-  const openEditConfig = () => {
-    editForm.setFieldsValue({
-      model: config.model,
-      handoffThreshold: config.handoffThreshold,
-      slaHours: config.slaHours,
-    });
-    setEditModal(true);
-  };
-
-  const saveConfig = async () => {
-    const values = await editForm.validateFields();
-    setConfig((prev) => ({ ...prev, ...values }));
-    setEditModal(false);
-    message.success("Đã lưu cấu hình.");
-  };
-
-  const toggleService = (key) => {
-    setServices((prev) => prev.map((s) => {
-      if (s.key !== key) return s;
-      const active = !s.active;
-      return { ...s, active, status: active ? "success" : "default", text: active ? "Đã kích hoạt" : "Đã tắt" };
-    }));
-    message.info("Đã cập nhật trạng thái dịch vụ.");
-  };
-
-  const testWebhook = (key) => {
-    setServices((prev) => prev.map((s) => (s.key === key ? { ...s, status: "processing", text: "Đang test..." } : s)));
-    setTimeout(() => {
-      setServices((prev) => prev.map((s) => (s.key === key ? { ...s, status: "success", text: "Test OK ✓" } : s)));
-      message.success("Webhook phản hồi thành công.");
-    }, 1500);
-  };
-
-  const toggleAutoReply = () => {
-    setConfig((prev) => ({ ...prev, autoReply: !prev.autoReply }));
-    message.info(config.autoReply ? "Đã tắt auto-reply." : "Đã bật auto-reply.");
-  };
-
-  const toggleAuditLog = () => {
-    setConfig((prev) => ({ ...prev, auditLog: !prev.auditLog }));
-    message.info(config.auditLog ? "Đã tắt audit log." : "Đã bật audit log.");
-  };
-
-  const resetDefaults = () => {
-    setConfig({ channels: ["Zalo OA", "Facebook Page", "Web Chat", "Email"], model: "ViProperty Agent v2", handoffThreshold: 85, slaHours: "08:00 - 21:00", autoReply: true, auditLog: true });
-    message.success("Đã khôi phục cấu hình mặc định.");
-  };
-
-  return (
-    <>
-      <Row gutter={[16, 16]}>
-        <Col xs={24} xl={12}>
-          <Card
-            title="Cấu hình hệ thống"
-            extra={
-              <Space>
-                <Button icon={<FormOutlined />} onClick={openEditConfig}>Chỉnh sửa</Button>
-                <Button danger onClick={resetDefaults}>Reset mặc định</Button>
-              </Space>
-            }
-          >
-            <Descriptions column={1} size="small">
-              <Descriptions.Item label="Kênh đang kết nối">
-                <Space wrap>{config.channels.map((ch) => <Tag key={ch} color="blue">{ch}</Tag>)}</Space>
-              </Descriptions.Item>
-              <Descriptions.Item label="Mô hình trả lời"><Tag color="purple">{config.model}</Tag></Descriptions.Item>
-              <Descriptions.Item label="Ngưỡng auto handoff">Confidence dưới {config.handoffThreshold}%</Descriptions.Item>
-              <Descriptions.Item label="Khung giờ SLA">{config.slaHours}</Descriptions.Item>
-              <Descriptions.Item label="Auto-reply">
-                <Button size="small" type={config.autoReply ? "primary" : "default"} onClick={toggleAutoReply}>
-                  {config.autoReply ? "Đang bật" : "Đang tắt"}
-                </Button>
-              </Descriptions.Item>
-              <Descriptions.Item label="Audit log">
-                <Button size="small" type={config.auditLog ? "primary" : "default"} onClick={toggleAuditLog}>
-                  {config.auditLog ? "Đang bật" : "Đang tắt"}
-                </Button>
-              </Descriptions.Item>
-            </Descriptions>
-          </Card>
-        </Col>
-        <Col xs={24} xl={12}>
-          <Card title="Trạng thái dịch vụ">
-            <List
-              dataSource={services}
-              renderItem={(item) => (
-                <List.Item
-                  actions={[
-                    <Button key="toggle" size="small" type={item.active ? "default" : "primary"} ghost={!item.active} onClick={() => toggleService(item.key)}>
-                      {item.active ? "Tắt" : "Bật"}
-                    </Button>,
-                    item.active ? <Button key="test" size="small" onClick={() => testWebhook(item.key)}>Test</Button> : null,
-                  ].filter(Boolean)}
-                >
-                  <Space style={{ width: "100%", justifyContent: "space-between" }}>
-                    <Text style={{ opacity: item.active ? 1 : 0.45 }}>{item.label}</Text>
-                    <Badge status={item.active ? item.status : "default"} text={item.text} />
-                  </Space>
-                </List.Item>
-              )}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Edit Config Modal */}
-      <Modal
-        title="Chỉnh sửa cấu hình"
-        open={editModal}
-        onCancel={() => setEditModal(false)}
-        onOk={saveConfig}
-        okText="Lưu"
-        cancelText="Huỷ"
-        destroyOnHidden
-      >
-        <Form form={editForm} layout="vertical" style={{ marginTop: 16 }}>
-          <Form.Item label="Mô hình AI" name="model">
-            <Select options={[
-              { value: "ViProperty Agent v2", label: "ViProperty Agent v2" },
-              { value: "ViProperty Agent v3 (Beta)", label: "ViProperty Agent v3 (Beta)" },
-              { value: "GPT-4o Fine-tuned", label: "GPT-4o Fine-tuned" },
-            ]} />
-          </Form.Item>
-          <Form.Item label="Ngưỡng auto handoff (%)" name="handoffThreshold">
-            <Input type="number" min={50} max={100} />
-          </Form.Item>
-          <Form.Item label="Khung giờ SLA" name="slaHours">
-            <Input placeholder="VD: 08:00 - 21:00" />
-          </Form.Item>
-        </Form>
-      </Modal>
-    </>
-  );
-}
-
 function renderPageContent(
   selectedKey,
   conversations,
@@ -2146,9 +2142,11 @@ function renderPageContent(
           onResolveTicket={dashboardActions.onResolveTicket}
         />
       );
-    case "conversations":
+    case "conversations_old":
+    case "conversations_new":
       return (
         <ConversationsPage
+          customerType={selectedKey}
           conversations={conversations}
           activeConversation={activeConversation}
           onConversationChange={onConversationChange}
@@ -2186,8 +2184,10 @@ function renderPageContent(
       return <ContentPage />;
     case "assistant":
       return <AssistantPage />;
+    case "system_logs":
+      return <SystemLogsView />;
     case "settings":
-      return <SettingsPage />;
+      return <AgentSettingsView isMobile={isMobile} />;
     default:
       return <DashboardPage />;
   }
@@ -2387,7 +2387,7 @@ export default function App() {
   const currentHeaderHeight = isMobile ? 128 : isTablet ? 104 : headerHeight;
   const [selectedKey, setSelectedKey] = useState("dashboard");
   const [displayedKey, setDisplayedKey] = useState("dashboard");
-  const currentFooterHeight = (isDesktop && displayedKey !== "conversations") ? footerHeight : 0;
+  const currentFooterHeight = (isDesktop && !displayedKey.startsWith("conversations")) ? footerHeight : 0;
   const [pageVisible, setPageVisible] = useState(true);
   const [navOpen, setNavOpen] = useState(false);
   const [conversationItems, setConversationItems] = useState(initialConversations);
@@ -2879,7 +2879,7 @@ export default function App() {
             </div>
           </Content>
 
-          {displayedKey !== "conversations" && (
+          {!displayedKey.startsWith("conversations") && (
             <Footer
             style={{
               position: isDesktop ? "fixed" : "sticky",
