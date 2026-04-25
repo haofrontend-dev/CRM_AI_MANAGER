@@ -307,3 +307,31 @@ button {
     animation: none;
   }
 }
+
+/* Pancake-style Chat UI */
+.pancake-inbox-item:hover {
+  background: #f0f5ff !important;
+}
+
+.pancake-chat-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pancake-chat-area::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.pancake-chat-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pancake-inbox::-webkit-scrollbar {
+  width: 4px;
+}
+
+.pancake-inbox::-webkit-scrollbar-thumb {
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.1);
+}
+

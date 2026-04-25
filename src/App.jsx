@@ -1,3 +1,4 @@
+import ConversationsPage from "./components/ConversationsPage";
 import { useEffect, useRef, useState } from "react";
 import {
   ApartmentOutlined,
@@ -16,6 +17,7 @@ import {
   PlusOutlined,
   PhoneOutlined,
   RobotOutlined,
+  SearchOutlined,
   SendOutlined,
   SettingOutlined,
   TeamOutlined,
@@ -171,6 +173,17 @@ const initialConversations = [
       "09:04 Đề xuất gửi brochure và bảng giá mới nhất",
     ],
     avatarColor: "#1677ff",
+    messages: [
+      { from: "customer", text: "Chào shop, cho em hỏi căn hộ Vinhomes quận 9 còn không ạ?", time: "09:02" },
+      { from: "ai", text: "Dạ chào chị, em kiểm tra giúp chị ngay. Hiện dự án Vinhomes Grand Park đang còn quỹ căn 2PN và 3PN. Chị quan tâm loại nào ạ?", time: "09:03", tag: "AI Auto" },
+      { from: "customer", text: "Em muốn xem căn 2PN, tầm 3.8 - 4.5 tỷ ạ", time: "09:04" },
+      { from: "ai", text: "Dạ với ngân sách đó chị có thể xem các căn 2PN diện tích 59-69m² tại block S5, S6. Em gửi chị bảng giá chi tiết nhé?", time: "09:04", tag: "AI Auto" },
+      { from: "customer", text: "Ừ em gửi giúp chị nha. Có lịch xem nhà mẫu không?", time: "09:05" },
+    ],
+    smartReplies: [
+      "Dạ em gửi chị bảng giá 2PN block S5-S6 và lịch xem nhà mẫu cuối tuần này ạ.",
+      "Chị cho em xin số điện thoại, em sẽ có chuyên viên liên hệ tư vấn trực tiếp ạ.",
+    ],
   },
   {
     id: 2,
@@ -192,6 +205,17 @@ const initialConversations = [
       "08:51 Hệ thống đề xuất escalte sang PM dự án",
     ],
     avatarColor: "#722ed1",
+    messages: [
+      { from: "customer", text: "Cho hỏi tiến độ bàn giao block B dự án The Emerald Riverside?", time: "08:48" },
+      { from: "ai", text: "Dạ anh Hoàng, em kiểm tra giúp anh ngay. Theo lịch hiện tại block B đang trong giai đoạn hoàn thiện nội thất.", time: "08:49", tag: "AI Auto" },
+      { from: "customer", text: "Tôi nghe nói bị trễ 2 tháng so với cam kết, đúng không?", time: "08:50" },
+      { from: "customer", text: "Hợp đồng ghi Q4/2025 mà giờ chưa thấy thông báo gì", time: "08:50" },
+      { from: "agent", text: "Dạ anh, em là Minh Tuấn bên CSKH. Em đang xác nhận với PM dự án về timeline mới nhất và sẽ phản hồi anh trong 15 phút tới ạ.", time: "08:52", name: "Minh Tuấn" },
+    ],
+    smartReplies: [
+      "Anh ơi, em đã nhận phản hồi từ PM, dự kiến bàn giao block B vào tháng 02/2026. Em gửi anh timeline chi tiết nhé.",
+      "Em xin lỗi về sự bất tiện. Em sẽ chuyển ngay cho PM dự án và phản hồi anh sớm nhất có thể.",
+    ],
   },
   {
     id: 3,
@@ -213,6 +237,17 @@ const initialConversations = [
       "08:30 Hệ thống gợi ý follow-up tuần sau",
     ],
     avatarColor: "#13c2c2",
+    messages: [
+      { from: "customer", text: "Cho tôi hỏi giá căn Studio tại Masteri Centre Point?", time: "08:18" },
+      { from: "ai", text: "Dạ chị Hương, căn Studio tại Masteri Centre Point hiện có giá từ 2.1 - 2.8 tỷ tùy tầng và view. Em gửi chị bảng giá chi tiết nhé?", time: "08:19", tag: "AI Auto" },
+      { from: "customer", text: "Gửi giúp tôi, tôi muốn xem căn 2PN luôn", time: "08:20" },
+      { from: "ai", text: "Dạ em gửi chị bảng giá cả Studio và 2PN. Căn 2PN từ 3.9 - 4.5 tỷ, vị trí đẹp nhất hiện còn tầng 15 và 22.", time: "08:21", tag: "AI Auto" },
+      { from: "customer", text: "Cảm ơn đã tư vấn, tôi sẽ xem xét và liên hệ lại sau", time: "08:27" },
+      { from: "ai", text: "Dạ cảm ơn chị đã quan tâm ạ. Em sẽ gửi lại thông tin cho chị qua email. Chị cần thêm gì cứ nhắn em nhé!", time: "08:28", tag: "AI Auto" },
+    ],
+    smartReplies: [
+      "Chị ơi, tuần này dự án có chương trình ưu đãi chiết khấu 2% cho khách đặt cọc sớm. Chị muốn em gửi chi tiết không ạ?",
+    ],
   },
   {
     id: 4,
@@ -234,6 +269,15 @@ const initialConversations = [
       "08:06 Chuyển owner Quang Huy theo rule hợp đồng",
     ],
     avatarColor: "#fa8c16",
+    messages: [
+      { from: "customer", text: "Tôi cần bổ sung điều khoản thanh toán trả góp qua ngân hàng vào phụ lục hợp đồng.", time: "08:01" },
+      { from: "ai", text: "Dạ anh Dũng, em đã ghi nhận yêu cầu và chuyển cho bộ phận pháp lý kiểm tra. Anh sẽ nhận bản cập nhật trước 16:00 hôm nay.", time: "08:03", tag: "AI Auto" },
+      { from: "customer", text: "Ok, cần thêm điều khoản phạt trễ hạn thanh toán nữa nhé", time: "08:10" },
+      { from: "agent", text: "Dạ anh, em là Quang Huy bên pháp lý. Em đã nhận hồ sơ và đang soát lại phụ lục. Em sẽ gửi bản redline cho anh review trước 15:00.", time: "08:15", name: "Quang Huy" },
+    ],
+    smartReplies: [
+      "Anh ơi em đã cập nhật 2 điều khoản vào phụ lục: thanh toán trả góp qua ngân hàng và phạt trễ hạn. Em gửi file redline để anh review nhé.",
+    ],
   },
   {
     id: 5,
@@ -255,8 +299,19 @@ const initialConversations = [
       "07:48 Gợi ý gửi bảng giá và CTA đặt lịch tư vấn",
     ],
     avatarColor: "#2f54eb",
+    messages: [
+      { from: "customer", text: "Giá căn góc tầng 18 block C dự án Nam Sài Gòn Residence là bao nhiêu?", time: "07:45" },
+      { from: "ai", text: "Dạ anh Khoa, căn góc tầng 18 block C hiện có giá 5.2 tỷ (đã VAT). Căn này có view sông rất đẹp và diện tích 89m².", time: "07:46", tag: "AI Auto" },
+      { from: "customer", text: "Có chính sách chiết khấu gì không? Thanh toán linh hoạt được không?", time: "07:47" },
+      { from: "ai", text: "Dạ hiện dự án có chiết khấu 3% cho khách thanh toán nhanh 95% và hỗ trợ vay ngân hàng đến 70% giá trị căn. Anh muốn em gửi bảng phân tích tài chính chi tiết không ạ?", time: "07:48", tag: "AI Auto" },
+    ],
+    smartReplies: [
+      "Em gửi anh bảng giá chi tiết căn góc T18 kèm so sánh với các tầng lân cận và chính sách thanh toán nhé.",
+      "Anh có muốn đặt lịch tham quan nhà mẫu cuối tuần này không ạ? Em book lịch giúp anh.",
+    ],
   },
 ];
+
 
 // Mock ticket table
 const initialTicketData = [
@@ -779,185 +834,6 @@ function DashboardPage({
   );
 }
 
-function ConversationsPage({
-  conversations,
-  activeConversation,
-  onConversationChange,
-  onOpenConversation,
-  onOpenCreateTicketModal,
-  onAssignConversationOwner,
-  onSendConversationReply,
-  onCallConversationLead,
-  onMarkConversationDone,
-  isMobile,
-}) {
-  return (
-    <Row gutter={[16, 16]}>
-      <Col xs={24} xl={9}>
-        <Card
-          title="Danh sách hội thoại"
-          extra={<Select defaultValue="all" options={[{ value: "all", label: "Tất cả kênh" }, { value: "zalo", label: "Zalo" }, { value: "facebook", label: "Facebook" }]} style={{ width: isMobile ? 120 : 140 }} />}
-        >
-          <List
-            itemLayout="horizontal"
-            dataSource={conversations}
-            renderItem={(item) => (
-              <List.Item
-                onClick={() => onConversationChange(item.id)}
-                style={{
-                  cursor: "pointer",
-                  paddingInline: 12,
-                  paddingBlock: 14,
-                  borderRadius: 8,
-                  background: activeConversation.id === item.id ? "#f6ffed" : "transparent",
-                }}
-                actions={[
-                  <Button
-                    key={`open-${item.id}`}
-                    type="link"
-                    size="small"
-                    icon={<EyeOutlined />}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onOpenConversation(item);
-                    }}
-                  >
-                    Mở
-                  </Button>,
-                  <Button
-                    key={`ticket-${item.id}`}
-                    size="small"
-                    icon={<PlusOutlined />}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onOpenCreateTicketModal(item.id);
-                    }}
-                  >
-                    Ticket
-                  </Button>,
-                ]}
-              >
-                <List.Item.Meta
-                  avatar={<Avatar style={{ background: item.avatarColor }}>{getInitials(item.name)}</Avatar>}
-                  title={
-                    <Space>
-                      <Text strong>{item.name}</Text>
-                      <Tag color={item.status.color}>{item.status.label}</Tag>
-                    </Space>
-                  }
-                  description={
-                    <Space direction="vertical" size={2}>
-                      <Text type="secondary">{item.message}</Text>
-                      <Text type="secondary">{item.channel} • {item.time}</Text>
-                    </Space>
-                  }
-                />
-              </List.Item>
-            )}
-          />
-        </Card>
-      </Col>
-
-      <Col xs={24} xl={15}>
-        <Card
-          title={
-            <Space>
-              <Avatar style={{ background: activeConversation.avatarColor }}>{getInitials(activeConversation.name)}</Avatar>
-              <div>
-                <div>{activeConversation.name}</div>
-                <Text type="secondary">{activeConversation.project}</Text>
-              </div>
-            </Space>
-          }
-          extra={
-            <Space wrap>
-              <Tag>{activeConversation.channel}</Tag>
-              <Tag color={activeConversation.status.color}>{activeConversation.status.label}</Tag>
-              <Button size="small" icon={<PhoneOutlined />} onClick={() => onCallConversationLead(activeConversation.id)}>
-                Gọi khách
-              </Button>
-              <Button size="small" icon={<PlusOutlined />} onClick={() => onOpenCreateTicketModal(activeConversation.id)}>
-                Tạo ticket
-              </Button>
-            </Space>
-          }
-        >
-          <Row gutter={[16, 16]}>
-            <Col span={24}>
-              <Card size="small" title="Tin nhắn gần nhất">
-                <Paragraph style={{ marginBottom: 0 }}>{activeConversation.message}</Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} lg={12}>
-              <Card size="small" title="AI phân tích">
-                <Descriptions column={1} size="small">
-                  <Descriptions.Item label="Intent">{activeConversation.intent}</Descriptions.Item>
-                  <Descriptions.Item label="Dự án">{activeConversation.project}</Descriptions.Item>
-                  <Descriptions.Item label="Owner gợi ý">{activeConversation.owner}</Descriptions.Item>
-                  <Descriptions.Item label="Số điện thoại">{activeConversation.phone}</Descriptions.Item>
-                  <Descriptions.Item label="Ngân sách">{activeConversation.budget}</Descriptions.Item>
-                </Descriptions>
-                <Divider style={{ margin: "12px 0" }} />
-                <Text type="secondary">{activeConversation.aiSummary}</Text>
-              </Card>
-            </Col>
-            <Col xs={24} lg={12}>
-              <Card size="small" title="Hành động đề xuất">
-                <Timeline
-                  items={[
-                    { color: "green", children: "Phản hồi tự động trong 30 giây đầu" },
-                    { color: "blue", children: "Gắn tag intent và dự án liên quan" },
-                    { color: "orange", children: "Chuyển owner khi khách yêu cầu tài liệu chi tiết" },
-                  ]}
-                />
-              </Card>
-            </Col>
-            <Col span={24}>
-              <Card size="small" title="Khung phản hồi AI">
-                <Paragraph>
-                  Dạ em kiểm tra giúp anh/chị ngay. Với nhu cầu liên quan đến <Text strong>{activeConversation.project}</Text>, hệ thống đang ưu tiên cập nhật thông tin mới nhất về giá bán, tiến độ và lịch hẹn tư vấn.
-                </Paragraph>
-                <Space wrap>
-                  <Button type="primary" icon={<SendOutlined />} onClick={() => onSendConversationReply(activeConversation.id)}>
-                    Gửi phản hồi
-                  </Button>
-                  <Button icon={<PlusOutlined />} onClick={() => onOpenCreateTicketModal(activeConversation.id)}>
-                    Chuyển ticket
-                  </Button>
-                  <Button icon={<UserSwitchOutlined />} onClick={() => onAssignConversationOwner(activeConversation.id)}>
-                    Gắn owner
-                  </Button>
-                  <Button icon={<CheckOutlined />} onClick={() => onMarkConversationDone(activeConversation.id)}>
-                    Hoàn tất
-                  </Button>
-                </Space>
-              </Card>
-            </Col>
-
-            <Col span={24}>
-              <Card size="small" title="Action nhanh">
-                <Space wrap>
-                  <Button icon={<EyeOutlined />} onClick={() => onOpenConversation(activeConversation)}>
-                    Mở drawer chi tiết
-                  </Button>
-                  <Button icon={<PhoneOutlined />} onClick={() => onCallConversationLead(activeConversation.id)}>
-                    Tạo nhắc gọi
-                  </Button>
-                  <Button icon={<UserSwitchOutlined />} onClick={() => onAssignConversationOwner(activeConversation.id)}>
-                    Điều phối owner
-                  </Button>
-                  <Button icon={<SendOutlined />} onClick={() => onSendConversationReply(activeConversation.id)}>
-                    Dùng phản hồi AI
-                  </Button>
-                </Space>
-              </Card>
-            </Col>
-          </Row>
-        </Card>
-      </Col>
-    </Row>
-  );
-}
 
 function TicketsPage({
   tickets,
@@ -2252,6 +2128,7 @@ function renderPageContent(
   activeTicket,
   onConversationChange,
   isMobile,
+  isTablet,
   dashboardActions,
 ) {
   switch (selectedKey) {
@@ -2282,6 +2159,7 @@ function renderPageContent(
           onCallConversationLead={dashboardActions.onCallConversationLead}
           onMarkConversationDone={dashboardActions.onMarkConversationDone}
           isMobile={isMobile}
+          isTablet={isTablet}
         />
       );
     case "tickets":
@@ -2320,10 +2198,11 @@ function SidebarContent({ selectedKey, onSelect }) {
     <>
       <div
         style={{
-          margin: 16,
-          padding: 14,
+          margin: "16px 16px",
+          padding: "14px 12px",
           borderRadius: 8,
-          background: "rgba(255,255,255,0.08)",
+          background: "linear-gradient(135deg, #f6ffed 0%, #e6f7ff 100%)",
+          border: "1px solid #e8e8e8"
         }}
       >
         <Space align="start" size={12}>
@@ -2343,8 +2222,8 @@ function SidebarContent({ selectedKey, onSelect }) {
             <ApartmentOutlined />
           </div>
           <div>
-            <div style={{ color: "#fff", fontWeight: 700, lineHeight: 1.2 }}>ViProperty</div>
-            <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, marginTop: 2 }}>
+            <div style={{ color: "#1f1f1f", fontWeight: 700, lineHeight: 1.2 }}>ViProperty</div>
+            <div style={{ color: "#8c8c8c", fontSize: 12, marginTop: 2 }}>
               AI Agent Platform
             </div>
           </div>
@@ -2352,7 +2231,7 @@ function SidebarContent({ selectedKey, onSelect }) {
       </div>
 
       <Menu
-        theme="dark"
+        theme="light"
         mode="inline"
         selectedKeys={[selectedKey]}
         items={menuItems}
@@ -2367,7 +2246,7 @@ function SidebarContent({ selectedKey, onSelect }) {
       <div style={{ padding: "12px 16px 20px" }}>
         <Badge
           status="processing"
-          text={<span style={{ color: "rgba(255,255,255,0.75)" }}>AI Agent đang hoạt động</span>}
+          text={<span style={{ color: "rgba(0,0,0,0.45)", fontSize: 13, fontWeight: 500 }}>AI Agent đang hoạt động</span>}
         />
       </div>
     </>
@@ -2506,10 +2385,9 @@ export default function App() {
   const isTablet = Boolean(screens.md) && !screens.lg;
   const isMobile = !screens.md;
   const currentHeaderHeight = isMobile ? 128 : isTablet ? 104 : headerHeight;
-  const currentFooterHeight = isDesktop ? footerHeight : 0;
-
   const [selectedKey, setSelectedKey] = useState("dashboard");
   const [displayedKey, setDisplayedKey] = useState("dashboard");
+  const currentFooterHeight = (isDesktop && displayedKey !== "conversations") ? footerHeight : 0;
   const [pageVisible, setPageVisible] = useState(true);
   const [navOpen, setNavOpen] = useState(false);
   const [conversationItems, setConversationItems] = useState(initialConversations);
@@ -2665,23 +2543,31 @@ export default function App() {
     message.success(`Đã gắn owner ${nextOwner}.`);
   };
 
-  const sendConversationReply = (conversationId) => {
+  const sendConversationReply = (conversationId, text = "") => {
+    const defaultReply = "Đã gửi phản hồi từ hệ thống.";
+    const messageText = text || defaultReply;
+    const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
     setConversationItems((current) =>
-      current.map((item) =>
-        item.id === conversationId
-          ? {
-              ...item,
-              status: { label: "Chờ PM", color: "orange" },
-              nextStep: "Đã gửi phản hồi AI và đang chờ khách xác nhận thông tin tiếp theo.",
-            }
-          : item,
-      ),
+      current.map((item) => {
+        if (item.id === conversationId) {
+          const newMessage = { from: "agent", text: messageText, time: timeString };
+          return {
+            ...item,
+            status: { label: "Đã phản hồi", color: "green" },
+            messages: [...(item.messages || []), newMessage],
+            nextStep: "Đã phản hồi khách hàng, chờ khách phản hồi lại.",
+            timeline: [...item.timeline, `${timeString} Agent gửi tin nhắn mới`],
+          };
+        }
+        return item;
+      }),
     );
     syncConversationDetailState(conversationId, {
-      status: { label: "Chờ PM", color: "orange" },
-      nextStep: "Đã gửi phản hồi AI và đang chờ khách xác nhận thông tin tiếp theo.",
+      status: { label: "Đã phản hồi", color: "green" },
+      nextStep: "Đã phản hồi khách hàng, chờ khách phản hồi lại.",
     });
-    message.success("Đã gửi phản hồi AI cho hội thoại.");
+    message.success("Đã gửi tin nhắn.");
   };
 
   const callConversationLead = (conversationId) => {
@@ -2840,22 +2726,35 @@ export default function App() {
           borderRadius: 8,
           colorBgLayout: "#f5f5f5",
         },
+        components: {
+          Menu: {
+            itemSelectedBg: "#E6F3EF",
+            itemSelectedColor: "#0F6E56",
+            itemHoverBg: "#f0f0f0",
+            itemActiveBg: "#E6F3EF",
+            itemBorderRadius: 8,
+            itemMarginInline: 12,
+            iconSize: 18,
+          },
+        },
       }}
     >
       <Layout style={{ minHeight: "100vh", background: "#f5f5f5" }}>
         {isDesktop ? (
           <Sider
             width={siderWidth}
-            theme="dark"
+            theme="light"
             collapsible={false}
             style={{
               position: "fixed",
               left: 0,
               top: 0,
               bottom: 0,
-              background: "#001529",
+              background: "#fff",
+              borderRight: "1px solid #f0f0f0",
               display: "flex",
               flexDirection: "column",
+              zIndex: 110,
             }}
           >
             <SidebarContent selectedKey={selectedKey} onSelect={handleMenuSelect} />
@@ -2932,7 +2831,7 @@ export default function App() {
           <Content
             ref={contentScrollRef}
             style={{
-              marginTop: currentHeaderHeight,
+              marginTop: isDesktop ? currentHeaderHeight : 0,
               marginBottom: currentFooterHeight,
               padding: isMobile ? 12 : isTablet ? 16 : 24,
               height: isDesktop ? `calc(100vh - ${currentHeaderHeight}px - ${currentFooterHeight}px)` : "auto",
@@ -2949,6 +2848,7 @@ export default function App() {
                 transition: `opacity ${pageTransitionDuration}ms ease, transform ${pageTransitionDuration}ms ease, filter ${pageTransitionDuration}ms ease`,
                 willChange: "opacity, transform, filter",
                 pointerEvents: pageVisible ? "auto" : "none",
+                height: "100%",
               }}
             >
               {renderPageContent(
@@ -2959,6 +2859,7 @@ export default function App() {
                 activeTicket,
                 setSelectedConversationId,
                 isMobile,
+                isTablet,
                 {
                   onOpenConversation: openConversationDetail,
                   onOpenTicket: openTicketDetail,
@@ -2978,7 +2879,8 @@ export default function App() {
             </div>
           </Content>
 
-          <Footer
+          {displayedKey !== "conversations" && (
+            <Footer
             style={{
               position: isDesktop ? "fixed" : "sticky",
               right: 0,
@@ -3016,6 +2918,7 @@ export default function App() {
               }
             />
           </Footer>
+          )}
         </Layout>
 
         <DashboardDetailDrawer
